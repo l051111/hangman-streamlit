@@ -1,12 +1,7 @@
+import streamlit as st
 import random
-import time
 
-
-def clear():
-    print("\n" * 100)
-    time.sleep(0.1)
-
-
+# Your exact data (unchanged)
 stages = [r'''
   +---+
   |   |
@@ -63,98 +58,98 @@ stages = [r'''
       |
 =========
 ''']
-print("Welcome to Hangman game!\n"
-      "Animals name are in thanglish(ex:singam),So think the letters in that way\n"
-      "you should guess the animal name based on below letters count.\n"
-      "you have 6 lives.each time whn you are guessing wrong you lose life.\n"
-      "So at then end if you lose all lives you will be hanged:)")
+
 word_list = ["singam", "puli", "anil", "paampu", "muyal", "nari", "mayil"]
-singam_clue = "You have one life left,So i will give you one clue:Kattuke Raja"
-puli_clue = "You have one life left,So i will give you one clue:India oda national Animal"
-anil_clue = "You have one life left,So i will give you one clue:Muthugula Moonu lines irukum"
-paampu_clue = "You have one life left,So i will give you one clue:paatha padaye natungum"
-muyal_clue = "You have one life left,So i will give you one clue:kutty ah irukum,vegama oodum ana maan ila"
-nari_clue = "You have one life left,So i will give you one clue:Thanthiramana animal"
-mayil_clue = "You have one life left,So i will give you one clue:muruganin vaganam"
+clues = {
+    "singam": "Kattuke Raja",
+    "puli": "India oda national Animal",
+    "anil": "Muthugula Moonu lines irukum",
+    "paampu": "paatha padaye natungum",
+    "muyal": "kutty ah irukum,vegama oodum ana maan ila",
+    "nari": "Thanthiramana animal",
+    "mayil": "muruganin vaganam"
+}
 
-Game_Restart = False
+# Initialize game state
+if 'lives' not in st.session_state:
+    st.session_state.lives = 6
+if 'chosen_word' not in st.session_state:
+    st.session_state.chosen_word = ""
+if 'display' not in st.session_state:
+    st.session_state.display = ""
+if 'crc_word' not in st.session_state:
+    st.session_state.crc_word = ""
+if 'game_over' not in st.session_state:
+    st.session_state.game_over = True
 
+st.title("🎮 Hangman - Thanglish Animals")
 
-def game():
-    lives = 6
-    chosen_word = random.choice(word_list)
-    to_user = ""
-    for _ in chosen_word:
-        to_user += "_"
-    print(f"So your Word have {len(chosen_word)} letters in it:{to_user}")
+# Instructions (your exact text)
+st.write("""
+Animals name are in **thanglish** (ex: singam). Think the letters in that way.
+You should guess the animal name based on below letters count.
+You have **6 lives**. Each time when you guess wrong you lose life.
+If you lose all lives you will be hanged :)
+""")
 
-    Game_over = False
-    clue_1 = False
-    crc_word = ""
-    while not Game_over:
-        display = ""
-        guess = input("please enter one letter that there in your guessing word:").lower()
-        clear()
-        for letter in chosen_word:
+# New Game button
+if st.button("🔄 New Game"):
+    st.session_state.chosen_word = random.choice(word_list)
+    st.session_state.display = "_" * len(st.session_state.chosen_word)
+    st.session_state.crc_word = ""
+    st.session_state.lives = 6
+    st.session_state.game_over = False
+    st.rerun()
+
+if st.session_state.game_over and st.session_state.chosen_word:
+    st.success("🎉 You Won!" if "_" not in st.session_state.display else "💀 Game Over!")
+    st.info(f"Word was: **{st.session_state.chosen_word}**")
+
+if not st.session_state.game_over:
+    # Show current game state
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Word")
+        st.code(st.session_state.display)
+        st.subheader("Lives")
+        st.text(f"{st.session_state.lives}/6")
+    
+    with col2:
+        st.text(stages[st.session_state.lives])
+    
+    # Guess input
+    guess = st.text_input("Enter one letter:", max_chars=1).lower()
+    
+    if st.button("Guess") and guess:
+        # Process guess (your exact logic)
+        new_display = ""
+        for letter in st.session_state.chosen_word:
             if letter == guess:
-                display += letter
-                crc_word += letter
-            elif letter in crc_word:
-                display += letter
+                new_display += letter
+                if letter not in st.session_state.crc_word:
+                    st.session_state.crc_word += letter
+            elif letter in st.session_state.crc_word:
+                new_display += letter
             else:
-                display += "_"
-        print(display)
-        if display == chosen_word:
-            Game_over = True
-            print("You Won!")
-        elif guess in chosen_word:
-            print(f"Your letter is there in word! You have {lives} Lives reamining")
-            print(stages[lives])
-        elif guess not in chosen_word:
-            lives -= 1
-            print(f"Oh no!,You letter not there in word,So you loss one life.Remaining lives {lives}")
-            print(stages[lives])
-        if lives == 1:
-            while not clue_1:
-                if lives == 1:
-                    clue_need = input("Do you need clue? Y or N:").lower()
-                    if clue_need == "y":
-                        if chosen_word == word_list[0]:
-                            print(singam_clue)
-                        elif chosen_word == word_list[1]:
-                            print(puli_clue)
-                        elif chosen_word == word_list[2]:
-                            print(anil_clue)
-                        elif chosen_word == word_list[3]:
-                            print(paampu_clue)
-                        elif chosen_word == word_list[4]:
-                            print(muyal_clue)
-                        elif chosen_word == word_list[5]:
-                            print(nari_clue)
-                        elif chosen_word == word_list[6]:
-                            print(mayil_clue)
-                        print(display)
-                    clue_1 = True
-        elif lives == 0:
-            clear()
+                new_display += "_"
+        
+        st.session_state.display = new_display
+        
+        if guess not in st.session_state.chosen_word:
+            st.session_state.lives -= 1
+        
+        # Check win
+        if st.session_state.display == st.session_state.chosen_word:
+            st.session_state.game_over = True
+        
+        # Check lose
+        if st.session_state.lives <= 0:
+            st.session_state.game_over = True
+        
+        st.rerun()
+    
+    # Clue at 1 life (your exact logic)
+    if st.session_state.lives == 1:
+        if st.button("💡 Clue"):
+            st.info(clues[st.session_state.chosen_word])
 
-            print("You lost all your lives and hanged:)")
-            print("Game over.")
-            print(stages[lives])
-            Game_over = True
-
-
-while not Game_Restart:
-    game()
-    Replay = input('Do you want to replay the game "Y" for Yes and "N" for No:').lower()
-    if Replay == "y":
-        Game_Restart = False
-        clear()
-    elif Replay == "n":
-        Game_Restart = True
-        clear()
-        print("Thank you for the play")
-    else:
-        Game_Restart = True
-        clear()
-        print("Thank you for the play")
